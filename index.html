@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Поздравление — взрывы, тачки и ключи</title>
+<style>
+  :root{
+    --bg1:#0b1020;
+    --accent:#ffd54a;
+    --glass: rgba(255,255,255,0.06);
+    --text:#fff;
+  }
+  html,b  </div>
+
+  <div class="flash-overlay" id="flashOverlay"></div>
+</main>
+
+<canvas id="explosionCanvas"></canvas>
+
+<script>gin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";background:linear-gradient(180deg,#070812 0%, #0e1322 60%, #101218 100%);color:var(--text);overflow-x:hidden;}
+  .hero{
+    min-height:70vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .decor{
+    position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
+  }
+  .layer{
+    position:absolute;top:0;left:50%;transform:translateX(-50%);opacity:0.08;
+    filter:blur(1px);
+    will-change:transform;
+  }
+  .layer.cars{top:5%;opacity:0.12;transform:translateX(-50%) scale(1.2); animation:slideX 18s linear infinite;}
+  .layer.gold{bottom:0;opacity:0.08;transform:translateX(-50%) scale(1.4); animation:slideX-rev 26s linear infinite;}
+  .layer.money{left:10%;top:20%;opacity:0.07; animation:float 10s ease-in-out infinite;}
+
+  @keyframes slideX{ from{transform:translateX(-60%) scale(1.2)} to{transform:translateX(-40%) scale(1.2)} }
+  @keyframes slideX-rev{ from{transform:translateX(-40%) scale(1.4)} to{transform:translateX(-60%) scale(1.4)} }
+  @keyframes float{ 0%{transform:translateY(0)}50%{transform:translateY(-18px)}100%{transform:translateY(0)} }
+
+  .title{
+    text-align:center;z-index:2;
+  }
+  .title h1{font-size:clamp(28px,6vw,56px);margin:0 0 8px;}
+  .title p{margin:0;color:rgba(255,255,255,0.75)}
+
+  main{padding:30px 18px 80px;max-width:1100px;margin:0 auto;}
+
+  .photos{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:32px;
+    margin:40px 0;
+  }
+  .photo-item{
+    display:flex;
+    gap:24px;
+    background:var(--glass);
+    border-radius:12px;
+    padding:24px;
+    transform:translateY(30px);opacity:0;transition:all 700ms cubic-bezier(.2,.9,.3,1);
+  }
+  .photo-item.revealed{transform:none;opacity:1;box-shadow:0 10px 30px rgba(2,6,23,0.6);}
+  .photo{
+    flex-shrink:0;
+    width:450px;
+    height:450px;
+    background:var(--glass);
+    border-radius:8px;
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .photo img{width:100%;height:100%;object-fit:contain;display:block;}
+  .photo-text{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:8px;
+  }
+  .photo-text h3{margin:0 0 8px;font-size:20px;color:var(--accent);}
+  .photo-text p{margin:0;color:rgba(255,255,255,0.75);line-height:1.5;}
+
+  .big-btn-wrap{display:flex;justify-content:center;margin:28px 0;position:relative;z-index:5;}
+  .big-btn{
+    --size:160px;
+    width:var(--size);height:var(--size);border-radius:50%;border:none;background:linear-gradient(145deg,#ff6a00,#ffb84d);
+    box-shadow:0 20px 50px rgba(255,110,10,0.18), inset 0 -6px 12px rgba(0,0,0,0.15);
+    font-size:18px;color:#2b0b00;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:transform .15s ease;
+  }
+  .big-btn:active{transform:scale(.96);}
+
+  #explosionCanvas{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1000;display:none}
+
+  .key-wrap{display:flex;align-items:center;flex-direction:column;gap:12px;margin-top:20px;}
+  .key{
+    width:180px;height:180px;border-radius:18px;background:linear-gradient(180deg,#111 0%,#1b1b1b 100%);display:flex;align-items:center;justify-content:center;transform:scale(.2) rotate(-8deg);opacity:0;transition:all 800ms cubic-bezier(.2,.9,.3,1);box-shadow:0 18px 40px rgba(0,0,0,0.6);
+  }
+  .key.visible{transform:scale(1) rotate(0);opacity:1;}
+
+  .subtitle{color:rgba(255,255,255,0.85);margin-top:8px;font-size:18px;text-align:center;}
+
+  .boom2-text{opacity:0;transform:translateY(10px);transition:all 700ms ease;color:#ffd; font-weight:700; text-align:center;}
+  .boom2-text.visible{opacity:1;transform:none;}
+
+  .game-container{display:none;margin:40px auto;max-width:800px;padding:20px;background:var(--glass);border-radius:12px;}
+  .game-container.active{display:block;}
+  .battle-arena{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin:30px 0;}
+  .character{text-align:center;flex:1;}
+  .character-sprite{width:200px;height:200px;margin:0 auto;background:var(--glass);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:80px;transition:transform 0.2s;overflow:hidden;}
+  .character-sprite img{width:100%;height:100%;object-fit:cover;}
+  .character-sprite.attack{transform:scale(1.15);filter:brightness(1.3);}
+  .character-name{font-size:20px;font-weight:700;margin:12px 0 8px;color:var(--accent);}
+  .health-bar-wrap{background:rgba(0,0,0,0.4);height:24px;border-radius:12px;overflow:hidden;margin:8px auto;max-width:200px;}
+  .health-bar{height:100%;background:linear-gradient(90deg,#ff3d00,#ffb84d);transition:width 0.3s;position:relative;}
+  .health-text{position:absolute;width:100%;text-align:center;line-height:24px;font-size:12px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.8);}
+  .attack-btn{background:linear-gradient(145deg,#ff6a00,#ffb84d);border:none;padding:16px 40px;border-radius:8px;font-size:18px;font-weight:700;color:#2b0b00;cursor:pointer;margin:20px 0;transition:transform 0.1s;}
+  .attack-btn:active{transform:scale(0.95);}
+  .attack-btn:disabled{opacity:0.5;cursor:not-allowed;}
+  .special-btn{background:linear-gradient(145deg,#ff00ff,#ff69b4);padding:20px 50px;font-size:22px;margin-top:20px;}
+  .victory-screen{display:none;text-align:center;padding:40px 20px;}
+  .victory-screen.active{display:block;}
+  .chest-container{margin:30px 0;}
+  .chest{width:150px;height:150px;margin:0 auto;background:linear-gradient(145deg,#8b6914,#d4af37);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:80px;transition:transform 0.2s;}
+  .chest:hover{transform:scale(1.05);}
+  .chest.opened{background:linear-gradient(145deg,#d4af37,#ffd700);}
+  .dialog-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);display:none;align-items:center;justify-content:center;z-index:9997;}
+  .dialog-overlay.active{display:flex;}
+  .dialog-box{background:linear-gradient(180deg,#1a1a2e,#16213e);padding:40px;border-radius:16px;text-align:center;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,0.8);}
+  .dialog-box h3{color:var(--accent);margin:0 0 20px;font-size:28px;}
+  .dialog-box p{color:rgba(255,255,255,0.85);margin:0 0 30px;font-size:18px;}
+  .choice-buttons{display:flex;gap:20px;justify-content:center;}
+  .choice-btn{padding:15px 35px;font-size:18px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:transform 0.1s;}
+  .choice-btn.cola{background:linear-gradient(145deg,#e74c3c,#c0392b);color:#fff;}
+  .choice-btn.pepsi{background:linear-gradient(145deg,#3498db,#2980b9);color:#fff;}
+  .choice-btn:hover{transform:scale(1.05);}
+  .video-overlay{position:fixed;inset:0;background:#000;display:none;align-items:center;justify-content:center;z-index:9998;}
+  .video-overlay.active{display:flex;}
+  .video-overlay video{max-width:90%;max-height:90%;}
+  .loading-bar-wrap{background:rgba(0,0,0,0.4);height:30px;border-radius:15px;overflow:hidden;margin:20px auto;max-width:400px;}
+  .loading-bar{height:100%;background:linear-gradient(90deg,#00ff00,#00aa00);width:0%;transition:width 0.1s linear;}
+  .loading-text{text-align:center;font-size:18px;margin:10px 0;color:var(--accent);}
+  .flash-overlay{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:9999;transition:opacity 0.3s;}
+  .flash-overlay.active{opacity:1;}
+  .seduce-overlay{position:fixed;inset:0;background:#fff;display:none;align-items:center;justify-content:center;z-index:9998;overflow:hidden;}
+  .seduce-overlay.active{display:flex;}
+  .seduce-overlay img{max-width:90%;max-height:90%;object-fit:contain;z-index:1;}
+  
+  .emoji-particle{position:fixed;font-size:40px;pointer-events:none;z-index:9999;animation:float-up 3s ease-out forwards;}
+  @keyframes float-up{
+    0%{transform:translateY(0) rotate(0deg);opacity:1;}
+    100%{transform:translateY(-100vh) rotate(360deg);opacity:0;}
+  }
+
+  footer{margin:60px 0 120px;color:rgba(255,255,255,0.45);text-align:center;font-size:14px}
+
+  @media (max-width:860px){
+    .photo{width:350px;height:350px;}
+    .big-btn{--size:120px}
+  }
+  @media (max-width:620px){
+    .photo-item{flex-direction:column;}
+    .photo{width:100%;height:320px;}
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="decor" aria-hidden="true">
+    <!-- Replace these with actual decorative SVG/PNG images for cars/gold/money or keep as abstract blocks -->
+    <img class="layer cars" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='300'><rect width='1200' height='300' rx='0' fill='%23ffd54a' fill-opacity='0.06'/></svg>" alt="">
+    <img class="layer gold" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1400' height='350'><rect width='1400' height='350' rx='0' fill='%23fff' fill-opacity='0.04'/></svg>" alt="">
+    <img class="layer money" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='800' height='400'><rect width='800' height='400' fill='%23000' fill-opacity='0.02'/></svg>" alt="">
+  </div>
+
+  <div class="title" role="banner" aria-label="Поздравление">
+    <h1>Артём, мы поздравляем тебя с днём рождения!</h1>
+    <p>Взрывы, тачки, золото — всё для тебя</p>
+    <p>Но не всё так просто, листай вниз.</p>
+  </div>
+</section>
+
+<main>
+  <section aria-labelledby="photos-title">
+    <h2 id="photos-title">Характеристики Артёма</h2>
+    <p style="color:rgba(255,255,255,0.7)">Здесь мы собрали твои основные характеристики</p>
+
+    <div class="photos" id="photosGrid">
+      <div class="photo-item">
+        <div class="photo"><img src="photos/1.jpg" alt="Артём 1"></div>
+        <div class="photo-text">
+          <h3>Убийственная улыбка</h3>
+          <p>Одним взглядом покоряет сердца, даёт -100 от силы соперника и +1000 к популярности у женщин, при схватке возможна сдача соперника из-за отсутствия мотивации.</p>
+        </div>
+      </div>
+      <div class="photo-item">
+        <div class="photo"><img src="photos/2.jpg" alt="Артём 2"></div>
+        <div class="photo-text">
+          <h3>Крутость</h3>
+          <p>Реальный SWAG, даёт +100 к уверенности и +50 к харизме, при схватке возможно ослепление соперника своим языком, а также телепорт на спавн (в дитон)</p>
+        </div>
+      </div>
+      <div class="photo-item">
+        <div class="photo"><img src="photos/3.jpg" alt="Артём 3"></div>
+        <div class="photo-text">
+          <h3>Грация</h3>
+          <p>Твои грациозные движения завораживают, даёт +80 к элегантности и +60 к координации, при схватке возможно замешательство соперника из-за плавности твоих действий.</p>
+        </div>
+      </div>
+      <div class="photo-item">
+        <div class="photo"><img src="photos/4.jpg" alt="Артём 4"></div>
+        <div class="photo-text">
+          <h3>Облизывание пальчиков</h3>
+          <p>Скрытая способность клана Ракул, даёт +30 к обаянию и +20 к ловкости языка и рук, возможна сдача соперника из-за гейских мыслей в отношении Артёма.</p>
+        </div>
+      </div>
+      <div class="photo-item">
+        <div class="photo"><img src="photos/5.jpg" alt="Артём 5"></div>
+        <div class="photo-text">
+          <h3>Серьезность</h3>
+          <p>Навык каменного лица даёт тебе +90 к авторитету и +70 к самоконтролю, при схватке возможна деморализация соперника из-за твоей невозмутимости и стальных яиц.</p>
+        </div>
+      </div>
+      <div class="photo-item">
+        <div class="photo"><img src="photos/6.jpg" alt="Артём 6"></div>
+        <div class="photo-text">
+          <h3>Совращение</h3>
+          <p>Заигрывание накаченной грудью сводит с ума окружающих, даёт +150 к обольщению и +100 к физической привлекательности, при схватке возможна полная капитуляция соперника из-за потери концентрации.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="action-title" style="margin-top:30px">
+    <h2 id="action-title">Нажми, чтобы начать шоу</h2>
+    <div class="big-btn-wrap">
+      <button id="explodeBtn" class="big-btn" aria-pressed="false" aria-label="Нажми для взрыва и получения ключа">ВЗРЫВ</button>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+      <h2 style="text-align:center;color:var(--accent);">Битва с Доктором Амбаинисом!</h2>
+      <div class="battle-arena">
+        <div class="character">
+          <div class="character-sprite" id="artyomSprite">
+            <img src="photos/character.PNG" alt="Артём">
+          </div>
+          <div class="character-name">Артём</div>
+          <div class="health-bar-wrap">
+            <div class="health-bar" id="artyomHealth" style="width:100%">
+              <div class="health-text"><span id="artyomHealthText">100/100</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:40px;align-self:center;">⚔️</div>
+        <div class="character">
+          <div class="character-sprite" id="bossSprite">
+            <img src="photos/doctor.png" alt="Доктор Амбаинис">
+          </div>
+          <div class="character-name">Доктор Амбаинис</div>
+          <div class="health-bar-wrap">
+            <div class="health-bar" id="bossHealth" style="width:100%">
+              <div class="health-text"><span id="bossHealthText">100/100</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;">
+        <button class="attack-btn" id="attackBtn">🥊 Атаковать</button>
+        <button class="attack-btn special-btn" id="seduceBtn" style="display:none;">💋 Совращение</button>
+      </div>
+      <div id="battleLog" style="text-align:center;margin-top:20px;min-height:30px;color:rgba(255,255,255,0.8);"></div>
+    </div>
+
+    <div class="victory-screen" id="victoryScreen">
+      <h2 style="color:var(--accent);font-size:32px;">🎉 Артём, ты победил злого Доктора Амбаиниса! 🎉</h2>
+      <p style="font-size:20px;margin:20px 0;color:rgba(255,255,255,0.85);">Ты получишь достойную награду...</p>
+      <div class="chest-container">
+        <div class="chest" id="chest">📦</div>
+        <p style="margin-top:16px;color:rgba(255,255,255,0.7);">Нажми на магическую коробку</p>
+      </div>
+      <div id="rewardArea" style="margin-top:30px;"></div>
+    </div>
+
+    <div class="dialog-overlay" id="dialogOverlay">
+      <div class="dialog-box">
+        <h3>🥤 Выбери свой напиток!</h3>
+        <p>Что лучше?</p>
+        <div class="choice-buttons">
+          <button class="choice-btn cola" id="colaBtn">Кола</button>
+          <button class="choice-btn pepsi" id="pepsiBtn">Пепси</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="video-overlay" id="videoOverlay">
+      <video id="pepsiVideo" controls>
+        <source src="photos/pepsi.MP4" type="video/mp4">
+      </video>
+    </div>
+
+    <div class="key-wrap" id="firstKeyArea" aria-live="polite" style="display:none;">
+      <div id="key1" class="key" role="img" aria-label="Первый ключ (Еlden)"></div>
+      <div id="msg1" class="subtitle"></div>
+    </div>
+
+    <div id="midText" style="margin-top:20px;text-align:center;color:rgba(255,255,255,0.8);font-size:18px"> </div>
+
+    <div style="height:40px"></div>
+
+    <div style="text-align:center;margin-top:18px">
+      <div id="boom2text" class="boom2-text">Но это ещё не всё...</div>
+      <div class="key-wrap" id="secondKeyArea" style="margin-top:18px;display:none;">
+        <div id="key2" class="key" role="img" aria-label="Второй ключ"></div>
+        <div id="msg2" class="subtitle"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="seduce-overlay" id="seduceOverlay">
+    <img src="photos/6.jpg" alt="Совращение">
+  </div>
+
+  <!-- Flash Overlay -->
+  <div class="flash-overlay" id="flashOverlay"></div>
+</main>
+
+<!-- canvas для частиц взрыва -->
+<canvas id="explosionCanvas"></canvas>
+
+<script>
+/*
+  Скрипт:
+  - Появление фотографий: IntersectionObserver добавляет .revealed по очереди
+  - Взрыв: canvas-частицы + показ первого ключа (появляется с анимацией)
+  - Потом текст "но это ещё не всё..." и второй более крупный взрыв + второй ключ
+  - В коде места отмечены комментариями, где можно положить реальные изображения ключей (как background-image)
+*/
+
+/* ---- photos reveal ---- */
+const photos = document.querySelectorAll('.photo-item');
+let revealedCount = 0;
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){
+      const index = Array.from(photos).indexOf(entry.target);
+      if(index === revealedCount){
+        entry.target.classList.add('revealed');
+        revealedCount++;
+        io.unobserve(entry.target);
+      }
+    }
+  });
+},{threshold:0.8});
+photos.forEach(p=>io.observe(p));
+
+/* ---- explosion engine (canvas particles) ---- */
+const canvas = document.getElementById('explosionCanvas');
+const ctx = canvas.getContext('2d');
+let W = canvas.width = innerWidth;
+let H = canvas.height = innerHeight;
+window.addEventListener('resize', ()=>{W = canvas.width = innerWidth; H = canvas.height = innerHeight;});
+
+function random(min,max){return Math.random()*(max-min)+min}
+
+function runExplosion(x,y,opts={}){
+  // opts: particleCount, spread, power, duration, colorize
+  const count = opts.particleCount || 80;
+  const spread = opts.spread || 80;
+  const power = opts.power || 7;
+  const duration = opts.duration || 900;
+  const colors = opts.colors || ['#ffb84d','#ffd54a','#ffffff','#ff6a00','#ff3d00'];
+
+  let particles = [];
+  for(let i=0;i<count;i++){
+    const angle = Math.random()*Math.PI*2;
+    const speed = random(power*0.3,power);
+    particles.push({
+      x,y,
+      vx: Math.cos(angle)*speed + random(-1,1),
+      vy: Math.sin(angle)*speed + random(-1,1),
+      life: random(duration*0.6,duration),
+      age:0,
+      r: random(2,6),
+      color: colors[Math.floor(Math.random()*colors.length)]
+    });
+  }
+
+  canvas.style.display = 'block';
+  let start = performance.now();
+  function frame(now){
+    const t = now - start;
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p=>{
+      p.age += 16.6;
+      // simple physics
+      p.vy += 0.18; // gravity
+      p.vx *= 0.995;
+      p.vy *= 0.995;
+      p.x += p.vx;
+      p.y += p.vy;
+      const alpha = Math.max(0,1 - p.age / p.life);
+      ctx.fillStyle = hexToRgba(p.color, alpha);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r * (0.6 + alpha*0.7), 0, Math.PI*2);
+      ctx.fill();
+    });
+
+    // remove dead
+    particles = particles.filter(p=>p.age < p.life);
+    if(particles.length>0){
+      requestAnimationFrame(frame);
+    } else {
+      ctx.clearRect(0,0,W,H);
+      canvas.style.display = 'none';
+    }
+  }
+  requestAnimationFrame(frame);
+}
+function hexToRgba(hex,a){
+  // accept #rrggbb
+  const h = hex.replace('#','');
+  const r = parseInt(h.substring(0,2),16);
+  const g = parseInt(h.substring(2,4),16);
+  const b = parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+/* ---- key reveal visuals ---- */
+const explodeBtn = document.getElementById('explodeBtn');
+const gameContainer = document.getElementById('gameContainer');
+const victoryScreen = document.getElementById('victoryScreen');
+const key1 = document.getElementById('key1');
+const msg1 = document.getElementById('msg1');
+const midText = document.getElementById('midText');
+const boom2text = document.getElementById('boom2text');
+const key2 = document.getElementById('key2');
+const msg2 = document.getElementById('msg2');
+
+// Game variables
+let artyomHP = 100;
+let bossHP = 100;
+let gameActive = false;
+let bossAttackInterval;
+
+let step = 0;
+explodeBtn.addEventListener('click', async ()=>{
+  if(step!==0) return; // prevent re-click spam
+  step = 1;
+  explodeBtn.setAttribute('aria-pressed','true');
+
+  // first explosion at center of button
+  const rect = explodeBtn.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  runExplosion(cx, cy, {particleCount:120, power:9, colors:['#ffd54a','#ff8b00','#ffffff']});
+
+  await sleep(800);
+  
+  // Hide button and show game
+  explodeBtn.style.display = 'none';
+  document.getElementById('action-title').textContent = 'Битва началась!';
+  gameContainer.classList.add('active');
+  startGame();
+});
+
+function startGame() {
+  gameActive = true;
+  artyomHP = 100;
+  bossHP = 100;
+  updateHealthBars();
+  
+  // Boss attacks randomly every 2-4 seconds
+  bossAttackInterval = setInterval(() => {
+    if (gameActive && artyomHP > 0) {
+      bossAttack();
+    }
+  }, Math.random() * 2000 + 2000);
+}
+
+document.getElementById('attackBtn').addEventListener('click', () => {
+  if (!gameActive) return;
+  
+  const damage = Math.floor(Math.random() * 15) + 10; // 10-25 damage
+  bossHP = Math.max(0, bossHP - damage);
+  updateHealthBars();
+  
+  // Animation
+  document.getElementById('artyomSprite').classList.add('attack');
+  setTimeout(() => document.getElementById('artyomSprite').classList.remove('attack'), 200);
+  
+  document.getElementById('battleLog').textContent = `Ты нанёс ${damage} урона!`;
+  
+  if (bossHP <= 0) {
+    bossDie();
+  }
+});
+
+function bossAttack() {
+  if (!gameActive) return;
+  
+  const damage = Math.floor(Math.random() * 12) + 8; // 8-20 damage
+  artyomHP = Math.max(0, artyomHP - damage);
+  updateHealthBars();
+  
+  // Animation
+  document.getElementById('bossSprite').classList.add('attack');
+  setTimeout(() => document.getElementById('bossSprite').classList.remove('attack'), 200);
+  
+  document.getElementById('battleLog').textContent = `Доктор Амбаинис нанёс тебе ${damage} урона!`;
+  
+  if (artyomHP <= 0) {
+    gameOver();
+  }
+}
+
+function updateHealthBars() {
+  document.getElementById('artyomHealth').style.width = artyomHP + '%';
+  document.getElementById('artyomHealthText').textContent = `${artyomHP}/100`;
+  document.getElementById('bossHealth').style.width = bossHP + '%';
+  document.getElementById('bossHealthText').textContent = `${bossHP}/100`;
+}
+
+async function bossDie() {
+  gameActive = false;
+  clearInterval(bossAttackInterval);
+  document.getElementById('attackBtn').style.display = 'none';
+  document.getElementById('seduceBtn').style.display = 'inline-block';
+  document.getElementById('battleLog').textContent = '💀 Босс побеждён! Используй финальный удар!';
+}
+
+document.getElementById('seduceBtn').addEventListener('click', async () => {
+  // Flash white
+  const flashOverlay = document.getElementById('flashOverlay');
+  const seduceOverlay = document.getElementById('seduceOverlay');
+  
+  flashOverlay.classList.add('active');
+  await sleep(300);
+  flashOverlay.classList.remove('active');
+  
+  // Show seduce image and play audio
+  seduceOverlay.classList.add('active');
+  const audio = new Audio('audio/audio.mp3');
+  audio.play();
+  
+  // Start flying hearts and kisses
+  const emojiInterval = setInterval(() => {
+    createFlyingEmoji();
+  }, 200); // Create new emoji every 200ms
+  
+  // After 7 seconds
+  await sleep(7000);
+  
+  clearInterval(emojiInterval);
+  seduceOverlay.classList.remove('active');
+  gameContainer.style.display = 'none';
+  victoryScreen.classList.add('active');
+});
+
+function createFlyingEmoji() {
+  const emojis = ['❤️', '💕', '💖', '💗', '💋', '😘', '💓', '💝', '💞', '💟'];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  
+  const particle = document.createElement('div');
+  particle.className = 'emoji-particle';
+  particle.textContent = emoji;
+  particle.style.left = Math.random() * window.innerWidth + 'px';
+  particle.style.bottom = '0px';
+  particle.style.animationDuration = (Math.random() * 2 + 2) + 's'; // 2-4 seconds
+  
+  document.body.appendChild(particle);
+  
+  // Remove after animation
+  setTimeout(() => {
+    particle.remove();
+  }, 4000);
+}
+
+function gameOver() {
+  gameActive = false;
+  clearInterval(bossAttackInterval);
+  document.getElementById('battleLog').textContent = '💀 Ты проиграл... Попробуй ещё раз!';
+  document.getElementById('attackBtn').disabled = true;
+}
+
+// Chest opening
+document.getElementById('chest').addEventListener('click', async function() {
+  if (this.classList.contains('opened')) return;
+  
+  this.classList.add('opened');
+  this.textContent = '💥';
+  
+  // Explosion at chest
+  const rect = this.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  runExplosion(cx, cy, {particleCount:100, power:8, colors:['#ffd700','#ffb84d','#ffffff']});
+  
+  await sleep(600);
+  
+  // Loading bar with "Раскрытие..."
+  const rewardArea = document.getElementById('rewardArea');
+  rewardArea.innerHTML = `
+    <div class="loading-text">Раскрытие...</div>
+    <div class="loading-bar-wrap">
+      <div class="loading-bar" id="loadingBar"></div>
+    </div>
+    <div class="loading-text" id="loadingPercent">0%</div>
+  `;
+  
+  // Animate loading
+  for (let i = 0; i <= 100; i++) {
+    await sleep(30);
+    document.getElementById('loadingBar').style.width = i + '%';
+    document.getElementById('loadingPercent').textContent = i + '%';
+  }
+  
+  await sleep(500);
+  
+  // Show first key
+  rewardArea.innerHTML = `
+    <div style="text-align:center;margin:30px 0;">
+      <div class="subtitle" style="font-size:24px;margin-bottom:15px;">Первый ключ — Ключ от Элдена!</div>
+      <div style="background:rgba(255,255,255,0.1);padding:20px;border-radius:12px;display:inline-block;">
+        <p style="font-size:32px;font-weight:700;color:var(--accent);margin:0;font-family:monospace;letter-spacing:2px;">ASHN-SAJS-123-ASJ</p>
+      </div>
+    </div>
+  `;
+  
+  await sleep(1500);
+  
+  // Show dialog
+  document.getElementById('dialogOverlay').classList.add('active');
+});
+
+// Cola button - runs away
+let colaAttempts = 0;
+document.getElementById('colaBtn').addEventListener('mouseenter', function() {
+  const btn = this;
+  const maxX = window.innerWidth - 200;
+  const maxY = window.innerHeight - 100;
+  const randomX = Math.random() * maxX;
+  const randomY = Math.random() * maxY;
+  
+  btn.style.position = 'fixed';
+  btn.style.left = randomX + 'px';
+  btn.style.top = randomY + 'px';
+  btn.style.transition = 'all 0.3s ease';
+  
+  colaAttempts++;
+  if (colaAttempts >= 3) {
+    btn.textContent = '😈 Нет, Кола!';
+  }
+});
+
+document.getElementById('colaBtn').addEventListener('click', function(e) {
+  e.preventDefault();
+  // Still runs away even if clicked somehow
+  const btn = this;
+  const maxX = window.innerWidth - 200;
+  const maxY = window.innerHeight - 100;
+  const randomX = Math.random() * maxX;
+  const randomY = Math.random() * maxY;
+  
+  btn.style.position = 'fixed';
+  btn.style.left = randomX + 'px';
+  btn.style.top = randomY + 'px';
+});
+
+// Pepsi button - correct choice
+document.getElementById('pepsiBtn').addEventListener('click', async function() {
+  document.getElementById('dialogOverlay').classList.remove('active');
+  
+  // Show video
+  const videoOverlay = document.getElementById('videoOverlay');
+  const video = document.getElementById('pepsiVideo');
+  videoOverlay.classList.add('active');
+  video.play();
+  
+  // Wait for video to end
+  video.onended = async () => {
+    videoOverlay.classList.remove('active');
+    
+    // Show reward text and second key
+    const rewardArea = document.getElementById('rewardArea');
+    rewardArea.innerHTML += `
+      <p style="font-size:24px;margin:30px 0;color:var(--accent);font-weight:700;">🎉 Вот твоя награда за правильный выбор! 🎉</p>
+    `;
+    
+    await sleep(500);
+    
+    // Big explosion
+    const bx = window.innerWidth/2;
+    const by = window.innerHeight/2.5;
+    runExplosion(bx, by, {particleCount:200, power:14, duration:1000, colors:['#ffffff','#ffd54a','#ff3d00']});
+    
+    await sleep(400);
+    
+    // Second key
+    rewardArea.innerHTML += `
+      <div style="text-align:center;margin-top:40px;">
+        <div class="subtitle" style="font-size:26px;margin-bottom:15px;">Второй ключ — Ключ от сердца Родана! 🔥</div>
+        <div style="background:rgba(255,255,255,0.1);padding:25px;border-radius:12px;display:inline-block;">
+          <p style="font-size:36px;font-weight:700;color:#ff3d00;margin:0;font-family:monospace;letter-spacing:2px;">JADJAI-12-ASDK-AA</p>
+        </div>
+      </div>
+    `;
+  };
+});
+
+/* utility */
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+/* Pre-fill key elements with nice SVG frame if user didn't set images */
+document.addEventListener('DOMContentLoaded', ()=>{
+  if(!key1.style.backgroundImage) {
+    // gentle placeholder (non-intrusive)
+    key1.innerHTML = `<svg width="120" height="120" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 14a5 5 0 1 1 0-10 5 5 0 0 1 0 10z" stroke="#ffd54a" stroke-width="1.3"/><path d="M12 12l8 8" stroke="#ffd54a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+  if(!key2.style.backgroundImage) {
+    key2.innerHTML = `<svg width="140" height="140" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 13a6 6 0 1 1 0-12 6 6 0 0 1 0 12z" stroke="#fff" stroke-width="1.2"/><path d="M10 10l10 10" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+});
+</script>
+</body>
+</html>
