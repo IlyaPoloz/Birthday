@@ -11,14 +11,7 @@
     --glass: rgba(255,255,255,0.06);
     --text:#fff;
   }
-  html,b  </div>
-
-  <div class="flash-overlay" id="flashOverlay"></div>
-</main>
-
-<canvas id="explosionCanvas"></canvas>
-
-<script>gin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";background:linear-gradient(180deg,#070812 0%, #0e1322 60%, #101218 100%);color:var(--text);overflow-x:hidden;}
+  html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue";background:linear-gradient(180deg,#070812 0%, #0e1322 60%, #101218 100%);color:var(--text);overflow-x:hidden;}
   .hero{
     min-height:70vh;
     display:flex;
@@ -28,6 +21,7 @@
     overflow:hidden;
   }
 
+  /* decorative moving car/gold/money layers */
   .decor{
     position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;
   }
@@ -52,6 +46,7 @@
 
   main{padding:30px 18px 80px;max-width:1100px;margin:0 auto;}
 
+  /* gallery of Artem photos that appear on scroll */
   .photos{
     display:grid;
     grid-template-columns:1fr;
@@ -89,6 +84,7 @@
   .photo-text h3{margin:0 0 8px;font-size:20px;color:var(--accent);}
   .photo-text p{margin:0;color:rgba(255,255,255,0.75);line-height:1.5;}
 
+  /* big button */
   .big-btn-wrap{display:flex;justify-content:center;margin:28px 0;position:relative;z-index:5;}
   .big-btn{
     --size:160px;
@@ -99,8 +95,10 @@
   }
   .big-btn:active{transform:scale(.96);}
 
+  /* explosion canvas overlay */
   #explosionCanvas{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1000;display:none}
 
+  /* key reveal */
   .key-wrap{display:flex;align-items:center;flex-direction:column;gap:12px;margin-top:20px;}
   .key{
     width:180px;height:180px;border-radius:18px;background:linear-gradient(180deg,#111 0%,#1b1b1b 100%);display:flex;align-items:center;justify-content:center;transform:scale(.2) rotate(-8deg);opacity:0;transition:all 800ms cubic-bezier(.2,.9,.3,1);box-shadow:0 18px 40px rgba(0,0,0,0.6);
@@ -109,9 +107,11 @@
 
   .subtitle{color:rgba(255,255,255,0.85);margin-top:8px;font-size:18px;text-align:center;}
 
+  /* second explosion emphasis */
   .boom2-text{opacity:0;transform:translateY(10px);transition:all 700ms ease;color:#ffd; font-weight:700; text-align:center;}
   .boom2-text.visible{opacity:1;transform:none;}
 
+  /* game styles */
   .game-container{display:none;margin:40px auto;max-width:800px;padding:20px;background:var(--glass);border-radius:12px;}
   .game-container.active{display:block;}
   .battle-arena{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;margin:30px 0;}
@@ -155,6 +155,7 @@
   .seduce-overlay.active{display:flex;}
   .seduce-overlay img{max-width:90%;max-height:90%;object-fit:contain;z-index:1;}
   
+  /* Flying hearts and kisses animation */
   .emoji-particle{position:fixed;font-size:40px;pointer-events:none;z-index:9999;animation:float-up 3s ease-out forwards;}
   @keyframes float-up{
     0%{transform:translateY(0) rotate(0deg);opacity:1;}
@@ -163,6 +164,7 @@
 
   footer{margin:60px 0 120px;color:rgba(255,255,255,0.45);text-align:center;font-size:14px}
 
+  /* responsive */
   @media (max-width:860px){
     .photo{width:350px;height:350px;}
     .big-btn{--size:120px}
@@ -196,6 +198,7 @@
     <p style="color:rgba(255,255,255,0.7)">Здесь мы собрали твои основные характеристики</p>
 
     <div class="photos" id="photosGrid">
+      <!-- Заменяй src на реальные пути к фотографиям Артёма -->
       <div class="photo-item">
         <div class="photo"><img src="photos/1.jpg" alt="Артём 1"></div>
         <div class="photo-text">
@@ -282,6 +285,7 @@
       <div id="battleLog" style="text-align:center;margin-top:20px;min-height:30px;color:rgba(255,255,255,0.8);"></div>
     </div>
 
+    <!-- Victory Screen -->
     <div class="victory-screen" id="victoryScreen">
       <h2 style="color:var(--accent);font-size:32px;">🎉 Артём, ты победил злого Доктора Амбаиниса! 🎉</h2>
       <p style="font-size:20px;margin:20px 0;color:rgba(255,255,255,0.85);">Ты получишь достойную награду...</p>
@@ -292,6 +296,7 @@
       <div id="rewardArea" style="margin-top:30px;"></div>
     </div>
 
+    <!-- Dialog Overlay -->
     <div class="dialog-overlay" id="dialogOverlay">
       <div class="dialog-box">
         <h3>🥤 Выбери свой напиток!</h3>
@@ -303,14 +308,16 @@
       </div>
     </div>
 
+    <!-- Video Overlay -->
     <div class="video-overlay" id="videoOverlay">
       <video id="pepsiVideo" controls>
         <source src="photos/pepsi.MP4" type="video/mp4">
       </video>
     </div>
 
+    <!-- Old key sections (hidden by default now) -->
     <div class="key-wrap" id="firstKeyArea" aria-live="polite" style="display:none;">
-      <div id="key1" class="key" role="img" aria-label="Первый ключ (Еlden)"></div>
+      <div id="key1" class="key" role="img" aria-label="Первый ключ (Еlden)"><!-- replace with key image --></div>
       <div id="msg1" class="subtitle"></div>
     </div>
 
@@ -321,12 +328,13 @@
     <div style="text-align:center;margin-top:18px">
       <div id="boom2text" class="boom2-text">Но это ещё не всё...</div>
       <div class="key-wrap" id="secondKeyArea" style="margin-top:18px;display:none;">
-        <div id="key2" class="key" role="img" aria-label="Второй ключ"></div>
+        <div id="key2" class="key" role="img" aria-label="Второй ключ"><!-- second key image --></div>
         <div id="msg2" class="subtitle"></div>
       </div>
     </div>
   </section>
 
+  <!-- Seduce Overlay -->
   <div class="seduce-overlay" id="seduceOverlay">
     <img src="photos/6.jpg" alt="Совращение">
   </div>
